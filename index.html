@@ -87,7 +87,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .phcard.pr .ph-delta{opacity:1;color:var(--red-dark)}
 #ph-total{text-align:center;font-size:13px;font-weight:700;min-height:20px;margin:6px 0}
 #ph-fb{font-size:12px;font-weight:600;min-height:18px;text-align:center;margin-top:4px}
-#rcanvas{display:block;width:100%;border-radius:8px;background:#e8f0e0;cursor:crosshair;touch-action:none;border:1.5px solid var(--border)}
+#rcanvas{display:block;width:100%;border-radius:8px;background:#e8f0e0;border:1.5px solid var(--border)}
 #reset-msg{text-align:center;font-size:12px;font-weight:600;min-height:18px;margin-top:8px}
 .nmeter{height:14px;border-radius:7px;background:linear-gradient(to right,#B5D4F4,#C0DD97 35%,#C0DD97 65%,#F09595);position:relative;margin:12px 0 5px}
 .nneedle{width:4px;height:24px;background:var(--text);border-radius:2px;position:absolute;top:-5px;transition:left .2s;transform:translateX(-50%);box-shadow:0 1px 4px rgba(0,0,0,.2)}
@@ -184,10 +184,13 @@ input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;ba
 <div class="panel" id="p-reset">
 <div class="card">
   <div class="card-title">Glem feilen fort</div>
-  <div class="card-sub">Tegn der ballen landet – utenfor eller i nettet. Trykk "Slett" og gi slipp.</div>
+  <div class="card-sub">Trykk "Spill" – se hva som skjer – slett og gå videre</div>
   <canvas id="rcanvas" width="640" height="200"></canvas>
   <div id="reset-msg"></div>
-  <div class="btn-row"><button class="btn" onclick="clearReset()">🗑 Slett feil</button></div>
+  <div class="btn-row">
+    <button class="btn pri" id="play-miss-btn" onclick="playMiss()">▶ Spill</button>
+    <button class="btn" id="clear-miss-btn" onclick="clearReset()" style="display:none">🗑 Slett feil</button>
+  </div>
   <button class="complete-btn" onclick="complete('reset',10)">✓ Fullfør øvelse · +10 XP</button>
   <div class="tips">
     <div class="tip"><b>Sletteknapp</b>Stryk hånden mot lårene etter en feil – din personlige reset.</div>
@@ -321,13 +324,173 @@ var focusItems=[{text:'Teknikk og fotarbeid',correct:true},{text:'Motstanderens 
 var bubblesReady=false,focusSessionPts=0,focusTapped=0;
 function initBubbles(){bubblesReady=true;focusSessionPts=0;focusTapped=0;var grid=document.getElementById('bubble-grid');grid.innerHTML='';var items=focusItems.slice().sort(function(){return Math.random()-.5;});items.forEach(function(item){var b=document.createElement('div');b.className='bubble';b.textContent=item.text;b.onclick=function(){if(b.classList.contains('used'))return;b.classList.add('used');focusTapped++;if(item.correct){b.classList.add('correct');focusSessionPts+=5;addPoints('focus',5);sndGood();}else{b.classList.add('wrong');focusSessionPts=Math.max(0,focusSessionPts-5);addPoints('focus',-5);sndBad();}var msg=document.getElementById('focus-score-msg');msg.textContent='Runde-poeng: '+focusSessionPts+' XP';msg.style.color=item.correct?'#3B6D11':'#A32D2D';if(focusTapped>=focusItems.length)document.getElementById('focus-complete-btn').disabled=false;};grid.appendChild(b);});document.getElementById('focus-score-msg').textContent='';document.getElementById('focus-complete-btn').disabled=true;}
 var rcCanvas=document.getElementById('rcanvas'),rcCtx=rcCanvas.getContext('2d');
-var resetReady=false,rcDrawing=false;
-function initReset(){resetReady=true;drawResetCourt();function rcPos(e){var r=rcCanvas.getBoundingClientRect();var sx=rcCanvas.width/r.width,sy=rcCanvas.height/r.height;var cx=e.clientX||(e.touches&&e.touches[0].clientX),cy=e.clientY||(e.touches&&e.touches[0].clientY);return{x:(cx-r.left)*sx,y:(cy-r.top)*sy};}rcCanvas.onmousedown=function(e){rcDrawing=true;rcCtx.beginPath();var p=rcPos(e);rcCtx.moveTo(p.x,p.y);};rcCanvas.onmousemove=function(e){if(!rcDrawing)return;var p=rcPos(e);rcCtx.lineTo(p.x,p.y);rcCtx.stroke();};rcCanvas.onmouseup=rcCanvas.onmouseleave=function(){rcDrawing=false;};rcCanvas.ontouchstart=function(e){e.preventDefault();rcDrawing=true;rcCtx.beginPath();var p=rcPos(e);rcCtx.moveTo(p.x,p.y);};rcCanvas.ontouchmove=function(e){e.preventDefault();if(!rcDrawing)return;var p=rcPos(e);rcCtx.lineTo(p.x,p.y);rcCtx.stroke();};rcCanvas.ontouchend=function(){rcDrawing=false;};}
-function drawResetCourt(){var W=640,H=200;rcCtx.clearRect(0,0,W,H);rcCtx.fillStyle='#2d7a3a';rcCtx.beginPath();rcCtx.roundRect(28,8,W-56,H-16,6);rcCtx.fill();var ol=28,or2=W-28,ot=8,ob=H-8,sl=28+54,sr=W-28-54,netY=H/2,midX=W/2;rcCtx.strokeStyle='rgba(255,255,255,.85)';rcCtx.lineWidth=2;rcCtx.strokeRect(ol,ot,or2-ol,ob-ot);rcCtx.beginPath();rcCtx.moveTo(sl,ot);rcCtx.lineTo(sl,ob);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(sr,ot);rcCtx.lineTo(sr,ob);rcCtx.stroke();rcCtx.strokeStyle='#d4a843';rcCtx.lineWidth=4;rcCtx.beginPath();rcCtx.moveTo(ol-4,netY);rcCtx.lineTo(or2+4,netY);rcCtx.stroke();rcCtx.strokeStyle='rgba(255,255,255,.85)';rcCtx.lineWidth=2;var nsY=netY+58,fsY=netY-58;rcCtx.beginPath();rcCtx.moveTo(sl,nsY);rcCtx.lineTo(sr,nsY);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(sl,fsY);rcCtx.lineTo(sr,fsY);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(midX,netY);rcCtx.lineTo(midX,nsY);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(midX,netY);rcCtx.lineTo(midX,fsY);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(midX,ot);rcCtx.lineTo(midX,ot+10);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(midX,ob);rcCtx.lineTo(midX,ob-10);rcCtx.stroke();rcCtx.fillStyle='rgba(255,255,255,.18)';rcCtx.font='10px -apple-system,sans-serif';rcCtx.textAlign='center';rcCtx.fillText('UT',W/2,ot+14);rcCtx.fillText('UT',W/2,ob-4);rcCtx.fillText('UT',ol+16,H/2);rcCtx.fillText('UT',or2-16,H/2);rcCtx.strokeStyle='#E24B4A';rcCtx.lineWidth=3;rcCtx.lineCap='round';rcCtx.lineJoin='round';}
-function clearReset(){if(!resetReady)return;sndPop();var alpha=1;var t=setInterval(function(){alpha-=.07;rcCtx.clearRect(0,0,640,200);rcCtx.save();rcCtx.globalAlpha=Math.max(0,alpha);drawResetCourt();rcCtx.restore();if(alpha<=0){clearInterval(t);drawResetCourt();var m=document.getElementById('reset-msg');m.textContent='✓ Ferdig! Neste poeng – fullt fokus.';m.style.color='#3B6D11';setTimeout(function(){m.textContent='';},2500);}},35);}
+var resetReady=false,missAnimating=false;
+var missTypes=['net','wide_right','wide_left','long','serve_fault'];
+var missDescriptions={net:'Ballen i nettet',wide_right:'Ballen ut til høyre',wide_left:'Ballen ut til venstre',long:'Ballen for langt',serve_fault:'Serve i nettet'};
+
+function initReset(){resetReady=true;drawResetCourt();}
+
+function drawResetCourt(){
+  var W=640,H=200;rcCtx.clearRect(0,0,W,H);
+  rcCtx.fillStyle='#2d7a3a';rcCtx.beginPath();rcCtx.roundRect(28,8,W-56,H-16,6);rcCtx.fill();
+  var ol=28,or2=W-28,ot=8,ob=H-8,sl=82,sr=558,netY=H/2,midX=W/2;
+  rcCtx.strokeStyle='rgba(255,255,255,.85)';rcCtx.lineWidth=2;
+  rcCtx.strokeRect(ol,ot,or2-ol,ob-ot);
+  rcCtx.beginPath();rcCtx.moveTo(sl,ot);rcCtx.lineTo(sl,ob);rcCtx.stroke();
+  rcCtx.beginPath();rcCtx.moveTo(sr,ot);rcCtx.lineTo(sr,ob);rcCtx.stroke();
+  rcCtx.strokeStyle='#d4a843';rcCtx.lineWidth=4;
+  rcCtx.beginPath();rcCtx.moveTo(ol-4,netY);rcCtx.lineTo(or2+4,netY);rcCtx.stroke();
+  rcCtx.strokeStyle='rgba(255,255,255,.85)';rcCtx.lineWidth=2;
+  var nsY=netY+58,fsY=netY-58;
+  rcCtx.beginPath();rcCtx.moveTo(sl,nsY);rcCtx.lineTo(sr,nsY);rcCtx.stroke();
+  rcCtx.beginPath();rcCtx.moveTo(sl,fsY);rcCtx.lineTo(sr,fsY);rcCtx.stroke();
+  rcCtx.beginPath();rcCtx.moveTo(midX,netY);rcCtx.lineTo(midX,nsY);rcCtx.stroke();
+  rcCtx.beginPath();rcCtx.moveTo(midX,netY);rcCtx.lineTo(midX,fsY);rcCtx.stroke();
+  rcCtx.beginPath();rcCtx.moveTo(midX,ot);rcCtx.lineTo(midX,ot+10);rcCtx.stroke();
+  rcCtx.beginPath();rcCtx.moveTo(midX,ob);rcCtx.lineTo(midX,ob-10);rcCtx.stroke();
+  rcCtx.fillStyle='rgba(255,255,255,.15)';rcCtx.font='10px -apple-system,sans-serif';rcCtx.textAlign='center';
+  rcCtx.fillText('UT',W/2,ot+13);rcCtx.fillText('UT',W/2,ob-3);rcCtx.fillText('UT',ol+14,netY+1);rcCtx.fillText('UT',or2-14,netY+1);
+}
+
+function drawBallAt(x,y,alpha){
+  rcCtx.save();rcCtx.globalAlpha=alpha;
+  rcCtx.beginPath();rcCtx.arc(x,y,7,0,Math.PI*2);
+  rcCtx.fillStyle='#ccdd00';rcCtx.fill();
+  rcCtx.strokeStyle='#888';rcCtx.lineWidth=1;rcCtx.stroke();
+  rcCtx.restore();
+}
+
+function drawImpact(x,y,size){
+  rcCtx.save();rcCtx.globalAlpha=0.7;
+  rcCtx.strokeStyle='#E24B4A';rcCtx.lineWidth=2;
+  var lines=[[x-size,y-size,x+size,y+size],[x+size,y-size,x-size,y+size],[x-size,y,x+size,y],[x,y-size,x,y+size]];
+  lines.forEach(function(l){rcCtx.beginPath();rcCtx.moveTo(l[0],l[1]);rcCtx.lineTo(l[2],l[3]);rcCtx.stroke();});
+  rcCtx.restore();
+}
+
+function playMiss(){
+  if(missAnimating)return;
+  missAnimating=true;
+  document.getElementById('play-miss-btn').disabled=true;
+  document.getElementById('clear-miss-btn').style.display='none';
+  document.getElementById('reset-msg').textContent='';
+
+  var W=640,H=200,netY=H/2,midX=W/2;
+  var type=missTypes[Math.floor(Math.random()*missTypes.length)];
+
+  // Define ball path per miss type
+  var path,impactX,impactY,label;
+  if(type==='net'){
+    path=[{x:midX+40,y:H-30},{x:midX,y:netY+20}];
+    impactX=midX;impactY=netY+4;label=missDescriptions.net;
+  } else if(type==='wide_right'){
+    path=[{x:midX+40,y:H-30},{x:W-20,y:netY-20}];
+    impactX=W-14;impactY=netY-22;label=missDescriptions.wide_right;
+  } else if(type==='wide_left'){
+    path=[{x:midX-40,y:H-30},{x:20,y:netY-20}];
+    impactX=14;impactY=netY-22;label=missDescriptions.wide_left;
+  } else if(type==='long'){
+    path=[{x:midX,y:H-30},{x:midX,y:8}];
+    impactX=midX;impactY=6;label=missDescriptions.long;
+  } else {
+    // serve fault – ball goes from side into net
+    path=[{x:90,y:H-40},{x:midX-30,y:netY+6}];
+    impactX=midX-30;impactY=netY+2;label=missDescriptions.serve_fault;
+  }
+
+  sndMiss();
+  var dur=900,start=null;
+  (function frame(ts){
+    if(!start)start=ts;
+    var t=Math.min((ts-start)/dur,1);
+    // Ease in
+    var e=t*t;
+    var bx=path[0].x+(path[1].x-path[0].x)*e;
+    var by=path[0].y+(path[1].y-path[0].y)*e;
+    drawResetCourt();
+    // Arc: ball rises slightly then falls
+    var arc=Math.sin(t*Math.PI)*18;
+    drawBallAt(bx,by-arc,1);
+    if(t<1){
+      requestAnimationFrame(frame);
+    } else {
+      // Show impact
+      drawImpact(impactX,impactY,10);
+      // Label
+      rcCtx.fillStyle='white';rcCtx.font='700 13px -apple-system,sans-serif';rcCtx.textAlign='center';
+      rcCtx.fillText(label,W/2,H-10);
+      // Show clear button
+      document.getElementById('clear-miss-btn').style.display='inline-block';
+      document.getElementById('reset-msg').textContent='Hva gjør du nå?';
+      document.getElementById('reset-msg').style.color='var(--text2)';
+      missAnimating=false;
+      document.getElementById('play-miss-btn').disabled=false;
+    }
+  })(performance.now());
+}
+
+function clearReset(){
+  if(!resetReady)return;sndPop();
+  document.getElementById('clear-miss-btn').style.display='none';
+  var alpha=1;
+  var t=setInterval(function(){
+    alpha-=.08;
+    rcCtx.clearRect(0,0,640,200);
+    rcCtx.save();rcCtx.globalAlpha=Math.max(0,alpha);drawResetCourt();rcCtx.restore();
+    if(alpha<=0){
+      clearInterval(t);drawResetCourt();
+      var m=document.getElementById('reset-msg');
+      m.textContent='✓ Slettet! Neste poeng – fullt fokus.';m.style.color='#3B6D11';
+      setTimeout(function(){m.textContent='';},2200);
+    }
+  },35);
+}
 var phrases=[{text:'"Jeg kan dette"',correct:true},{text:'"Jeg er så dårlig til dette"',correct:false},{text:'"Neste poeng er viktigst"',correct:true},{text:'"Hvorfor bommer jeg alltid?"',correct:false},{text:'"Jeg gir alt – kom igjen!"',correct:true},{text:'"Det er urettferdig"',correct:false},{text:'"Én ting om gangen"',correct:true},{text:'"Alle ser at jeg er dårlig"',correct:false}];
-var phrasesReady=false,phSessionPts=0,phTapped=0;
-function initPhrases(){phrasesReady=true;phSessionPts=0;phTapped=0;var list=document.getElementById('ph-list');list.innerHTML='';phrases.forEach(function(ph){var d=document.createElement('div');d.className='phcard';var span=document.createElement('span');span.textContent=ph.text;var delta=document.createElement('span');delta.className='ph-delta';d.appendChild(span);d.appendChild(delta);d.onclick=function(){if(d.classList.contains('used'))return;d.classList.add('used');phTapped++;if(ph.correct){d.classList.add('pg');delta.textContent='+5 XP';phSessionPts+=5;addPoints('selftak',5);sndGood();document.getElementById('ph-fb').textContent='✓ Riktig – denne bygger deg opp!';document.getElementById('ph-fb').style.color='#3B6D11';}else{d.classList.add('pr');delta.textContent='−5 XP';phSessionPts=Math.max(0,phSessionPts-5);addPoints('selftak',-5);sndBad();document.getElementById('ph-fb').textContent='✗ Denne tapper energien – unngå den!';document.getElementById('ph-fb').style.color='#A32D2D';}document.getElementById('ph-total').textContent='Runde-poeng: '+phSessionPts+' XP';if(phTapped>=phrases.length)document.getElementById('selftak-complete-btn').disabled=false;};list.appendChild(d);});document.getElementById('ph-total').textContent='';document.getElementById('ph-fb').textContent='';document.getElementById('selftak-complete-btn').disabled=true;}
+var phrasesReady=false,phSessionPts=0,phTapped=0,phCorrect=0;
+function initPhrases(){
+  phrasesReady=true;phSessionPts=0;phTapped=0;phCorrect=0;
+  var list=document.getElementById('ph-list');list.innerHTML='';
+  // Shuffle so order varies each round
+  var shuffled=phrases.slice().sort(function(){return Math.random()-.5;});
+  shuffled.forEach(function(ph){
+    var d=document.createElement('div');d.className='phcard';
+    var span=document.createElement('span');span.textContent=ph.text;
+    var delta=document.createElement('span');delta.className='ph-delta';
+    d.appendChild(span);d.appendChild(delta);
+    d.onclick=function(){
+      if(d.classList.contains('used'))return;
+      d.classList.add('used');phTapped++;
+      if(ph.correct){
+        d.classList.add('pg');delta.textContent='+5 XP';
+        phSessionPts+=5;phCorrect++;
+        addPoints('selftak',5);sndGood();
+        document.getElementById('ph-fb').textContent='✓ Riktig – denne bygger deg opp!';
+        document.getElementById('ph-fb').style.color='#3B6D11';
+      } else {
+        d.classList.add('pr');delta.textContent='−5 XP';
+        phSessionPts=Math.max(0,phSessionPts-5);
+        addPoints('selftak',-5);sndBad();
+        document.getElementById('ph-fb').textContent='✗ Denne tapper energien – unngå den!';
+        document.getElementById('ph-fb').style.color='#A32D2D';
+      }
+      document.getElementById('ph-total').textContent='Runde-poeng: '+phSessionPts+' XP';
+      // Auto-reset and award bonus when all 4 correct ones are found
+      if(phCorrect>=4){
+        document.getElementById('selftak-complete-btn').disabled=false;
+        document.getElementById('ph-fb').textContent='🎉 Full pott! Alle riktige funnet – ny runde starter om 2 sek';
+        document.getElementById('ph-fb').style.color='#3B6D11';
+        addPoints('selftak',10);
+        setTimeout(function(){initPhrases();},2000);
+      } else if(phTapped>=shuffled.length){
+        document.getElementById('selftak-complete-btn').disabled=false;
+      }
+    };
+    list.appendChild(d);
+  });
+  document.getElementById('ph-total').textContent='';
+  document.getElementById('ph-fb').textContent='';
+  document.getElementById('selftak-complete-btn').disabled=true;
+}
 var nCanvas=document.getElementById('nerve-canvas'),nCtx=nCanvas.getContext('2d');
 var nerveTipsData={lo:[{ico:'⚡',title:'Vekk kroppen',body:'Hopp litt, rist armene – gi kroppen signal om at dette betyr noe.'},{ico:'🔥',title:'Snakk til deg selv',body:'"Jeg vil dette!" Minn deg på hva som motiverer deg.'},{ico:'🏃',title:'Øk tempoet',body:'Slå noen kraftige slag. Kroppen trenger mer energi.'}],ok:[{ico:'✅',title:'Hold det du har',body:'Du er i sonen – ett poeng om gangen. Stol på kroppen.'},{ico:'🔁',title:'Bruk rutinen',body:'Nå er rutinen din mest effektiv. Bruk den etter hvert poeng.'},{ico:'😊',title:'Nyt øyeblikket',body:'Akkurat passe nervøs betyr at du bryr deg. Bra!'}],hi:[{ico:'🌬',title:'Pust nå',body:'Inn 4 sek, hold 2, ut 4. Gjenta til du kjenner ro.'},{ico:'💪',title:'Kroppen er klar',body:'"Jeg er ikke nervøs – jeg er klar." Nervene er energi.'},{ico:'🎾',title:'Se på racketen',body:'Rutinen henter deg tilbake, alltid.'},{ico:'🔍',title:'Bare neste poeng',body:'Ikke kampen. Bare ett poeng nå.'},{ico:'👇',title:'Slipp skuldrene',body:'Sjekk om du spenner skuldrene – slipp dem ned.'}]};
 var lastNerveZone=null;
