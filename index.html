@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tennis">
+<meta name="theme-color" content="#2d7a3a">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Mental styrke – tennis</title>
+<style>
+:root {
+  --green: #2d7a3a;
+  --green-light: #EAF3DE;
+  --green-mid: #639922;
+  --green-dark: #3B6D11;
+  --blue: #378ADD;
+  --blue-light: #E6F1FB;
+  --blue-dark: #185FA5;
+  --red: #E24B4A;
+  --red-light: #FCEBEB;
+  --red-dark: #A32D2D;
+  --amber: #EF9F27;
+  --bg: #f2f0eb;
+  --card: #ffffff;
+  --text: #1a1a18;
+  --text2: #5f5e5a;
+  --text3: #88877f;
+  --border: #dddbd4;
+  --radius: 12px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+  padding-bottom: calc(16px + var(--safe-bottom));
+}
+
+/* ─ Layout ─ */
+.container { max-width: 600px; margin: 0 auto; padding: 0 14px; }
+
+/* ─ Header ─ */
+.app-bar {
+  background: var(--green);
+  color: white;
+  padding: 14px 16px 12px;
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  position: sticky; top: 0; z-index: 100;
+}
+.app-bar-inner { max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.app-bar h1 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+.app-bar p { font-size: 11px; opacity: .75; margin-top: 1px; }
+.total-xp { background: rgba(255,255,255,.18); border-radius: 20px; padding: 5px 12px; text-align: center; }
+.total-xp .val { font-size: 20px; font-weight: 800; line-height: 1; }
+.total-xp .lbl { font-size: 9px; opacity: .8; font-weight: 600; letter-spacing: .04em; }
+
+/* ─ Score strip ─ */
+.score-strip {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.score-strip::-webkit-scrollbar { display: none; }
+.score-strip { max-width: 100%; }
+.sitem { flex: 1; min-width: 64px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 4px; border-right: 1px solid var(--border); }
+.sitem:last-child { border-right: none; }
+.sitem .ico { font-size: 16px; }
+.sitem .pts { font-size: 13px; font-weight: 800; color: var(--blue-dark); }
+.sitem .tlbl { font-size: 9px; color: var(--text3); font-weight: 600; }
+
+/* ─ Nav ─ */
+.nav-wrap { padding: 14px 14px 0; }
+.nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.nb {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 11px 6px 9px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .12s;
+  -webkit-user-select: none;
+  user-select: none;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.nb:active { transform: scale(.95); background: #f0ede6; }
+.nb.active { border: 2px solid var(--blue); background: var(--blue-light); }
+.nb .ico { font-size: 20px; }
+.nb .lbl { font-size: 10px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.nb.active .lbl { color: var(--blue-dark); }
+.nb .xp { font-size: 9px; font-weight: 700; color: var(--blue); background: rgba(55,138,221,.1); border-radius: 8px; padding: 1px 5px; }
+
+/* ─ Panel ─ */
+.panels { padding: 12px 14px 0; }
+.panel { display: none; }
+.panel.on { display: block; animation: fi .18s ease; }
+@keyframes fi { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ─ Card ─ */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 10px;
+}
+.card-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+.card-sub { font-size: 12px; color: var(--text2); margin-bottom: 12px; line-height: 1.4; }
+
+/* ─ Complete button ─ */
+.complete-btn {
+  display: block; width: 100%;
+  margin-top: 14px; padding: 13px;
+  font-size: 14px; font-weight: 800;
+  cursor: pointer; border-radius: var(--radius);
+  border: none;
+  background: var(--green-light);
+  color: var(--green-dark);
+  text-align: center;
+  transition: all .12s;
+  letter-spacing: -.1px;
+}
+.complete-btn:active { transform: scale(.97); background: #c0dd97; }
+
+/* ─ Tips ─ */
+.tips { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.tip {
+  padding: 10px 12px;
+  border-left: 3px solid var(--blue);
+  background: var(--bg);
+  border-radius: 0 8px 8px 0;
+  font-size: 12px; color: var(--text); line-height: 1.6;
+}
+.tip b { font-size: 10px; font-weight: 800; color: var(--blue-dark); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .06em; }
+
+/* ─ Buttons ─ */
+.btn-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.btn {
+  padding: 9px 18px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--bg); color: var(--text);
+  transition: all .1s;
+}
+.btn:active { transform: scale(.95); }
+.btn.pri { background: var(--blue-light); border-color: var(--blue); color: var(--blue-dark); }
+
+/* ─ Pips ─ */
+.pips { display: flex; align-items: center; gap: 4px; justify-content: center; margin: 10px 0 5px; flex-wrap: wrap; }
+.pip {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--text3);
+  transition: all .25s;
+}
+.pip.done { background: var(--green-light); border-color: var(--green-mid); color: var(--green-dark); }
+.pip.act { background: var(--blue-light); border-color: var(--blue); color: var(--blue-dark); transform: scale(1.15); }
+.pip-sep { width: 10px; height: 1.5px; background: var(--border); }
+#rstep-label { text-align: center; font-size: 13px; font-weight: 700; color: var(--text); min-height: 20px; transition: opacity .18s; margin-bottom: 2px; }
+#rstep-desc { text-align: center; font-size: 11px; color: var(--text2); min-height: 16px; margin-bottom: 8px; }
+#rfeedback { text-align: center; font-size: 12px; font-weight: 700; min-height: 18px; margin-bottom: 4px; opacity: 0; transition: opacity .3s; }
+#rfeedback.show { opacity: 1; }
+
+/* ─ Focus cols ─ */
+.fcols { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 10px 0; }
+.fcol {
+  border-radius: 10px; padding: 12px 10px;
+  border: 1.5px solid transparent;
+  cursor: pointer; transition: all .15s;
+}
+.fcol:active { transform: scale(.97); }
+.fcol.dim { opacity: .3; }
+.fcol.fg { background: var(--green-light); border-color: #97C459; }
+.fcol.fr { background: var(--red-light); border-color: #F09595; }
+.fcol h4 { font-size: 12px; font-weight: 800; margin-bottom: 5px; }
+.fcol.fg h4 { color: var(--green-dark); } .fcol.fr h4 { color: var(--red-dark); }
+.fcol p { font-size: 11px; line-height: 1.7; }
+.fcol.fg p { color: #27500A; } .fcol.fr p { color: #791F1F; }
+#focus-msg { text-align: center; font-size: 12px; font-weight: 600; min-height: 18px; margin-bottom: 4px; }
+
+/* ─ Phrase cards ─ */
+.phcard {
+  border-radius: 9px; padding: 12px 14px; margin-bottom: 8px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--text); border: 1.5px solid var(--border);
+  background: var(--bg); transition: all .12s;
+}
+.phcard:active { transform: scale(.97); }
+.phcard.pg { background: var(--green-light); border-color: var(--green-mid); color: #27500A; }
+.phcard.pr { background: var(--red-light); border-color: var(--red); color: #791F1F; }
+#ph-fb { font-size: 12px; font-weight: 600; min-height: 18px; text-align: center; margin-top: 8px; }
+
+/* ─ Nerve ─ */
+.nmeter {
+  height: 14px; border-radius: 7px;
+  background: linear-gradient(to right, #B5D4F4, #C0DD97 35%, #C0DD97 65%, #F09595);
+  position: relative; margin: 12px 0 5px;
+}
+.nneedle {
+  width: 4px; height: 24px; background: var(--text);
+  border-radius: 2px; position: absolute; top: -5px;
+  transition: left .2s; transform: translateX(-50%);
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+#nerve-lbl { text-align: center; font-size: 13px; font-weight: 700; min-height: 20px; margin-bottom: 10px; }
+input[type=range] {
+  width: 100%; height: 32px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  border-radius: 50%; background: white;
+  border: 2px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  margin-top: -11px;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: var(--border);
+}
+.nerve-tip-card {
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+  border: 1.5px solid transparent; animation: fi .2s ease;
+}
+.nerve-tip-card h4 { font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+.nerve-tip-card p { font-size: 12px; line-height: 1.65; }
+.ntc-lo { background: var(--blue-light); border-color: #85B7EB; }
+.ntc-lo h4 { color: var(--blue-dark); } .ntc-lo p { color: #0C447C; }
+.ntc-ok { background: var(--green-light); border-color: #97C459; }
+.ntc-ok h4 { color: var(--green-dark); } .ntc-ok p { color: #27500A; }
+.ntc-hi { background: var(--red-light); border-color: #F09595; }
+.ntc-hi h4 { color: var(--red-dark); } .ntc-hi p { color: #791F1F; }
+
+/* ─ Reset canvas ─ */
+#rcanvas {
+  display: block; width: 100%; border-radius: 8px;
+  background: #e8f0e0; cursor: crosshair; touch-action: none;
+  border: 1.5px solid var(--border);
+}
+#reset-msg { text-align: center; font-size: 12px; font-weight: 600; min-height: 18px; margin-top: 8px; }
+
+/* ─ Sound row ─ */
+.sound-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 14px; padding: 10px 0 4px;
+  font-size: 12px; color: var(--text2);
+}
+.sound-row label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.sound-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); }
+
+/* ─ XP popup ─ */
+.xp-pop {
+  position: fixed; left: 50%; top: 40%;
+  transform: translateX(-50%);
+  font-size: 32px; font-weight: 900;
+  color: var(--green-dark);
+  pointer-events: none; z-index: 9999;
+  animation: xpboom 1.1s ease forwards;
+  text-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+@keyframes xpboom {
+  0% { opacity: 0; transform: translateX(-50%) scale(.5); }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.3); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1) translateY(-10px); }
+  100% { opacity: 0; transform: translateX(-50%) scale(.9) translateY(-40px); }
+}
+</style>
+</head>
+<body>
+
+<div class="app-bar">
+  <div class="app-bar-inner">
+    <div>
+      <h1>🎾 Mental styrke</h1>
+      <p>Tren og samle poeng</p>
+    </div>
+    <div class="total-xp">
+      <div class="val" id="total-score">0</div>
+      <div class="lbl">TOTAL XP</div>
+    </div>
+  </div>
+</div>
+
+<div class="score-strip" id="score-strip"></div>
+
+<div class="nav-wrap">
+  <div class="nav">
+    <button class="nb" onclick="show('breath',this)"><span class="ico">🌬</span><span class="lbl">Pust og ro</span><span class="xp" id="nbpts-breath">0 XP</span></button>
+    <button class="nb" onclick="show('routine',this)"><span class="ico">🔁</span><span class="lbl">Rutine</span><span class="xp" id="nbpts-routine">0 XP</span></button>
+    <button class="nb" onclick="show('focus',this)"><span class="ico">🎯</span><span class="lbl">Fokus</span><span class="xp" id="nbpts-focus">0 XP</span></button>
+    <button class="nb" onclick="show('reset',this)"><span class="ico">🗑</span><span class="lbl">Glem feilen</span><span class="xp" id="nbpts-reset">0 XP</span></button>
+    <button class="nb" onclick="show('selftak',this)"><span class="ico">💬</span><span class="lbl">Selvsnakk</span><span class="xp" id="nbpts-selftak">0 XP</span></button>
+    <button class="nb" onclick="show('nerves',this)"><span class="ico">😰</span><span class="lbl">Nerver</span><span class="xp" id="nbpts-nerves">0 XP</span></button>
+  </div>
+</div>
+
+<div class="panels">
+
+<!-- PUST -->
+<div class="panel" id="p-breath">
+  <div class="card">
+    <div class="card-title">Pust og ro</div>
+    <div class="card-sub">Følg sirkelen – pust i takt med den</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <canvas id="breath-canvas" width="260" height="260" style="max-width:260px;width:100%"></canvas>
+      <div class="btn-row">
+        <button class="btn pri" onclick="startBreath()" id="breath-btn">▶ Start</button>
+        <button class="btn" onclick="stopBreath()">■ Stopp</button>
+      </div>
+    </div>
+    <button class="complete-btn" onclick="complete('breath',15)">✓ Fullfør øvelse · +15 XP</button>
+    <div class="tips">
+      <div class="tip"><b>Når?</b>Etter en feil, før serve, når pulsen stiger</div>
+      <div class="tip"><b>Slik</b>Inn (4 sek) → hold (2 sek) → ut gjennom munnen (4 sek)</div>
+      <div class="tip"><b>Hvorfor?</b>Ett pust senker pulsen og gir deg kontroll tilbake</div>
+    </div>
+  </div>
+</div>
+
+<!-- RUTINE -->
+<div class="panel" id="p-routine">
+  <div class="card">
+    <div class="card-title">Rutine mellom poeng</div>
+    <div class="card-sub">Se spilleren gå gjennom rutinen steg for steg</div>
+    <canvas id="court" width="640" height="300" style="display:block;width:100%;border-radius:8px;border:1px solid var(--border)"></canvas>
+    <div class="pips" id="rpips"></div>
+    <div id="rfeedback"></div>
+    <div id="rstep-label">Trykk "Neste steg" for å starte</div>
+    <div id="rstep-desc"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="rNext()">Neste →</button>
+      <button class="btn" onclick="rReset()">Start om</button>
+      <button class="btn pri" onclick="rAuto()">▶ Spill av</button>
+    </div>
+    <button class="complete-btn" id="routine-complete-btn" onclick="complete('routine',20)" style="display:none">✓ Rutine fullført! · +20 XP</button>
+    <div class="tips">
+      <div class="tip"><b>Én tanke er nok</b>Velg én konkret tanke – f.eks. "se ballen". Aldri mer.</div>
+      <div class="tip"><b>Tren det daglig</b>Gjør rutinen etter hvert poeng – også de du vinner.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOKUS -->
+<div class="panel" id="p-focus">
+  <div class="card">
+    <div class="card-title">Fokus og prosess</div>
+    <div class="card-sub">Trykk på kolonnene – hva kan du faktisk kontrollere?</div>
+    <canvas id="focus-canvas" width="640" height="150" style="display:block;width:100%;margin-bottom:8px"></canvas>
+    <div class="fcols">
+      <div class="fcol fg" id="fc-yes" onclick="toggleFocus('yes')">
+        <h4>✓ Kan kontrollere</h4>
+        <p>Teknikk og fotarbeid<br>Innsats og holdning<br>Eget pust og fokus<br>Strategi</p>
+      </div>
+      <div class="fcol fr" id="fc-no" onclick="toggleFocus('no')">
+        <h4>✗ Kan ikke kontrollere</h4>
+        <p>Motstanderens spill<br>Dommers avgjørelser<br>Vind og bane<br>Sluttresultatet</p>
+      </div>
+    </div>
+    <div id="focus-msg"></div>
+    <button class="complete-btn" onclick="complete('focus',10)">✓ Fullfør øvelse · +10 XP</button>
+    <div class="tips">
+      <div class="tip"><b>Prosessmål</b>"Jeg skal bruke rutinen etter hver feil" – ikke "jeg må vinne"</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESET -->
+<div class="panel" id="p-reset">
+  <div class="card">
+    <div class="card-title">Glem feilen fort</div>
+    <div class="card-sub">Tegn feilen på banen – trykk "Slett" og gi slipp</div>
+    <canvas id="rcanvas" width="640" height="130"></canvas>
+    <div id="reset-msg"></div>
+    <div class="btn-row"><button class="btn" onclick="clearReset()">🗑 Slett feil</button></div>
+    <button class="complete-btn" onclick="complete('reset',10)">✓ Fullfør øvelse · +10 XP</button>
+    <div class="tips">
+      <div class="tip"><b>Sletteknapp</b>Stryk hånden mot lårene etter en feil – din personlige reset.</div>
+      <div class="tip"><b>Kort hukommelse</b>"Neste poeng er det viktigste"</div>
+    </div>
+  </div>
+</div>
+
+<!-- SELVSNAKK -->
+<div class="panel" id="p-selftak">
+  <div class="card">
+    <div class="card-title">Selvsnakk</div>
+    <div class="card-sub">Trykk på setningene – hjelper de eller skader de?</div>
+    <canvas id="self-canvas" width="640" height="110" style="display:block;width:100%;margin-bottom:10px"></canvas>
+    <div id="ph-list">
+      <div class="phcard" onclick="pickPhrase(this,'g')">"Jeg kan dette"</div>
+      <div class="phcard" onclick="pickPhrase(this,'r')">"Jeg er så dårlig til dette"</div>
+      <div class="phcard" onclick="pickPhrase(this,'g')">"Neste poeng er viktigst"</div>
+      <div class="phcard" onclick="pickPhrase(this,'r')">"Hvorfor bommer jeg alltid?"</div>
+      <div class="phcard" onclick="pickPhrase(this,'g')">"Jeg gir alt – kom igjen!"</div>
+      <div class="phcard" onclick="pickPhrase(this,'r')">"Det er urettferdig"</div>
+    </div>
+    <div id="ph-fb"></div>
+    <button class="complete-btn" onclick="complete('selftak',10)">✓ Fullfør øvelse · +10 XP</button>
+    <div class="tips">
+      <div class="tip"><b>Anerkjenn følelsen</b>"Jeg kjenner frustrasjon – det er greit." Det tar bort noe av kraften.</div>
+    </div>
+  </div>
+</div>
+
+<!-- NERVER -->
+<div class="panel" id="p-nerves">
+  <div class="card">
+    <div class="card-title">Nerver og press</div>
+    <div class="card-sub">Dra slideren og finn ditt nivå – tips tilpasses</div>
+    <canvas id="nerve-canvas" width="640" height="180" style="display:block;width:100%;margin-bottom:4px"></canvas>
+    <div class="nmeter"><div class="nneedle" id="nneedle" style="left:50%"></div></div>
+    <input type="range" min="0" max="100" value="50" id="nerve-sl" oninput="updateNerve(this.value)">
+    <div id="nerve-lbl" style="color:var(--green-dark)">Akkurat passe – skjerpet og klar!</div>
+    <div id="nerve-tips"></div>
+    <button class="complete-btn" onclick="complete('nerves',15)">✓ Fullfør øvelse · +15 XP</button>
+  </div>
+</div>
+
+</div><!-- /panels -->
+
+<div class="sound-row">
+  <label><input type="checkbox" id="snd" checked> Lyd på</label>
+  <span style="color:var(--border)">|</span>
+  <label>Volum <input type="range" id="vol" min="0" max="100" value="60" step="1" style="width:80px;height:20px;vertical-align:middle"></label>
+</div>
+
+<script>
+/* ─── SCORING ─── */
+var TOPICS={breath:{label:'Pust',ico:'🌬'},routine:{label:'Rutine',ico:'🔁'},focus:{label:'Fokus',ico:'🎯'},reset:{label:'Glem',ico:'🗑'},selftak:{label:'Snakk',ico:'💬'},nerves:{label:'Nerver',ico:'😰'}};
+var scores={};
+Object.keys(TOPICS).forEach(function(k){scores[k]=0;});
+function loadScores(){try{var s=JSON.parse(localStorage.getItem('tennis-xp-v2'));if(s)Object.keys(s).forEach(function(k){if(scores[k]!==undefined)scores[k]=s[k];});}catch(e){}renderScores();}
+function saveScores(){try{localStorage.setItem('tennis-xp-v2',JSON.stringify(scores));}catch(e){}}
+function renderScores(){
+  var total=Object.values(scores).reduce(function(a,b){return a+b;},0);
+  document.getElementById('total-score').textContent=total;
+  var strip=document.getElementById('score-strip');strip.innerHTML='';
+  Object.keys(TOPICS).forEach(function(k){
+    var d=document.createElement('div');d.className='sitem';
+    d.innerHTML='<span class="ico">'+TOPICS[k].ico+'</span><span class="pts">'+scores[k]+'</span><span class="tlbl">XP</span>';
+    strip.appendChild(d);
+    var nb=document.getElementById('nbpts-'+k);if(nb)nb.textContent=scores[k]+' XP';
+  });
+}
+function complete(topic,pts){
+  scores[topic]=(scores[topic]||0)+pts;saveScores();renderScores();sndReady();
+  var el=document.createElement('div');el.className='xp-pop';el.textContent='+'+pts+' XP!';
+  document.body.appendChild(el);setTimeout(function(){el.remove();},1150);
+  if(topic==='routine'){document.getElementById('routine-complete-btn').style.display='none';rReset();}
+}
+
+/* ─── AUDIO ─── */
+var AC=null;
+function ac(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
+function vol(){return document.getElementById('vol').value/100;}
+function snd(){return document.getElementById('snd').checked;}
+function tone(f,type,dur,v,d){if(!snd())return;d=d||0;var a=ac(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(0,a.currentTime+d);g.gain.linearRampToValueAtTime((v||.25)*vol(),a.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d+dur);o.start(a.currentTime+d);o.stop(a.currentTime+d+dur+.05);}
+function sndMiss(){tone(110,'sawtooth',.2,.5);tone(75,'sawtooth',.28,.3,.14);}
+function sndRacket(){tone(440,'triangle',.12,.22);tone(880,'triangle',.07,.1,.05);}
+function sndBreath(){if(!snd())return;[180,300,430,560].forEach(function(f){var a=ac(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,a.currentTime);g.gain.linearRampToValueAtTime(.055*vol(),a.currentTime+.7);g.gain.linearRampToValueAtTime(.038*vol(),a.currentTime+1.5);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+2.4);o.start(a.currentTime);o.stop(a.currentTime+2.5);});}
+function sndWalk(){[0,.34].forEach(function(d){tone(85,'triangle',.1,.32,d);tone(55,'triangle',.08,.18,d+.04);});}
+function sndChime(){[523,659,784].forEach(function(f,i){tone(f,'triangle',.3,.2,i*.18);});}
+function sndReady(){[392,523,659,784,1046].forEach(function(f,i){tone(f,'triangle',.28,.26,i*.11);});}
+function sndGood(){[523,659,784].forEach(function(f,i){tone(f,'triangle',.22,.22,i*.1);});}
+function sndBad(){tone(220,'sawtooth',.18,.3);tone(165,'sawtooth',.22,.2,.12);}
+function sndPop(){tone(600,'triangle',.08,.28);tone(800,'triangle',.06,.15,.04);}
+
+/* ─── NAV ─── */
+function show(id,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('p-'+id).classList.add('on');
+  if(btn)btn.classList.add('active');
+  if(id==='routine'&&!courtReady)initCourt();
+  if(id==='reset'&&!resetReady)initReset();
+  if(id==='focus')drawFocusCanvas();
+  if(id==='selftak')drawSelfCanvas();
+  if(id==='nerves'){drawNerveCanvas(50);renderNerveTips(50);}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ═══ PUST ═══ */
+var bCanvas=document.getElementById('breath-canvas'),bCtx=bCanvas.getContext('2d');
+var bAnim=null,bRunning=false;
+function drawBreath(phase){
+  var W=260,H=260,cx=130,cy=130;bCtx.clearRect(0,0,W,H);
+  var t=phase%10,r,label,sub;
+  if(t<4){r=30+t/4*44;label='Inn';sub='gjennom nesen';}
+  else if(t<6){r=74;label='Hold';sub='';}
+  else{r=74-(t-6)/4*44;label='Ut';sub='gjennom munnen';}
+  var a=r/74;
+  bCtx.beginPath();bCtx.arc(cx,cy,r+20,0,Math.PI*2);bCtx.fillStyle='rgba(55,138,221,'+(a*.28)+')';bCtx.fill();
+  bCtx.beginPath();bCtx.arc(cx,cy,r+9,0,Math.PI*2);bCtx.fillStyle='rgba(55,138,221,'+(a*.48)+')';bCtx.fill();
+  bCtx.beginPath();bCtx.arc(cx,cy,r,0,Math.PI*2);bCtx.fillStyle='#378ADD';bCtx.fill();
+  bCtx.fillStyle='white';bCtx.textAlign='center';bCtx.textBaseline='middle';
+  bCtx.font='700 17px -apple-system,sans-serif';bCtx.fillText(label,cx,cy-5);
+  bCtx.font='11px -apple-system,sans-serif';bCtx.fillStyle='rgba(255,255,255,.88)';bCtx.fillText(sub,cx,cy+12);
+  var prog=t/10;
+  bCtx.beginPath();bCtx.arc(cx,cy,r+26,-Math.PI/2,-Math.PI/2+prog*Math.PI*2);
+  bCtx.strokeStyle='rgba(55,138,221,.55)';bCtx.lineWidth=3;bCtx.stroke();
+  bCtx.font='11px -apple-system,sans-serif';bCtx.fillStyle='#378ADD';bCtx.textAlign='center';
+  bCtx.fillText('Inn 4s',cx,26);bCtx.fillText('Hold 2s',cx+108,cy);bCtx.fillText('Ut 4s',cx,cy+106);
+}
+drawBreath(0);
+function startBreath(){if(bRunning)return;bRunning=true;sndBreath();document.getElementById('breath-btn').textContent='⏸ Pågår...';var start=null;function frame(ts){if(!start)start=ts;drawBreath((ts-start)/1000);if(bRunning)bAnim=requestAnimationFrame(frame);}bAnim=requestAnimationFrame(frame);}
+function stopBreath(){bRunning=false;if(bAnim)cancelAnimationFrame(bAnim);document.getElementById('breath-btn').textContent='▶ Start';drawBreath(0);}
+
+/* ═══ RUTINE ═══ */
+var cCanvas=document.getElementById('court'),cCtx=cCanvas.getContext('2d');
+var CW=640,CH=300,CL=80,CR=560,CT=28,CB=272,NET=150,SL=150,SR=490,CCX=CW/2;
+var courtReady=false,rStep=-1,rAnimating=false,rPX=CCX,rPY=CB-18,rEx={};
+var rSteps=[
+  {label:'Feilen skjer',desc:'Ballen treffer nettet – det skjer alle',pos:{x:SL+90,y:NET+88},action:'miss',fb:'Feilen er over – det er fortid',fbc:'#A32D2D'},
+  {label:'Se på strengene',desc:'Blikket ned – bryt kontakten med feilen',pos:{x:SL+90,y:NET+88},action:'racket',fb:'Bra – blikket ditt bryter kontakten',fbc:'#185FA5'},
+  {label:'Ta ett dypt pust',desc:'Inn gjennom nesen – ut gjennom munnen',pos:{x:SL+90,y:NET+88},action:'breath',fb:'Pulsen synker. Du er i kontroll.',fbc:'#0F6E56'},
+  {label:'Gå til posisjon',desc:'Rolig vandring bak baselinjen',pos:{x:CCX,y:CB-18},action:'walk',fb:'Rolig og målrettet – perfekt',fbc:'#854F0B'},
+  {label:'Én enkel tanke',desc:'"Se ballen hele veien"',pos:{x:CCX,y:CB-18},action:'think',fb:'Hjernen er klar. Én tanke er nok.',fbc:'#534AB7'},
+  {label:'Klar – fullt fokus!',desc:'Frisk start. Neste poeng begynner nå.',pos:{x:CCX,y:CB-18},action:'ready',fb:'Du er klar. Neste poeng starter nå!',fbc:'#3B6D11'},
+];
+function initCourt(){courtReady=true;var pc=document.getElementById('rpips');pc.innerHTML='';rSteps.forEach(function(_,i){var d=document.createElement('div');d.className='pip';d.id='rp'+i;d.textContent=i+1;pc.appendChild(d);if(i<rSteps.length-1){var s=document.createElement('div');s.className='pip-sep';pc.appendChild(s);}});drawCourt();}
+function setPips(a){rSteps.forEach(function(_,i){var p=document.getElementById('rp'+i);if(!p)return;p.className='pip'+(i<a?' done':i===a?' act':'');p.textContent=i<a?'✓':(i+1);});}
+function setRLabel(i){var el=document.getElementById('rstep-label'),de=document.getElementById('rstep-desc'),fb=document.getElementById('rfeedback');el.style.opacity=0;fb.classList.remove('show');setTimeout(function(){el.textContent=i>=0?rSteps[i].label:'Trykk "Neste" for å starte';de.textContent=i>=0?rSteps[i].desc:'';el.style.opacity=1;if(i>=0){fb.textContent=rSteps[i].fb;fb.style.color=rSteps[i].fbc;fb.classList.add('show');}},130);}
+function drawCourt(){cCtx.clearRect(0,0,CW,CH);cCtx.fillStyle='#2d7a3a';cCtx.beginPath();cCtx.roundRect(CL,CT,CR-CL,CB-CT,6);cCtx.fill();cCtx.strokeStyle='rgba(255,255,255,.85)';cCtx.lineWidth=2;cCtx.strokeRect(CL,CT,CR-CL,CB-CT);[[SL,CT,SL,CB],[SR,CT,SR,CB],[CL,NET,CR,NET]].forEach(function(l){cCtx.beginPath();cCtx.moveTo(l[0],l[1]);cCtx.lineTo(l[2],l[3]);cCtx.stroke();});cCtx.beginPath();cCtx.moveTo(CCX,NET);cCtx.lineTo(CCX,NET+80);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(CCX,NET);cCtx.lineTo(CCX,NET-80);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(SL,NET+80);cCtx.lineTo(SR,NET+80);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(SL,NET-80);cCtx.lineTo(SR,NET-80);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(CCX,CB);cCtx.lineTo(CCX,CB-10);cCtx.stroke();cCtx.strokeStyle='#d4a843';cCtx.lineWidth=5;cCtx.beginPath();cCtx.moveTo(CL-5,NET);cCtx.lineTo(CR+5,NET);cCtx.stroke();drawOpponent();drawPlayer(rPX,rPY,rStep>=0?rSteps[rStep].action:'idle',rEx);}
+function drawOpponent(){var ox=SL+70,oy=NET-52;cCtx.beginPath();cCtx.ellipse(ox,oy+14,10,3.5,0,0,Math.PI*2);cCtx.fillStyle='rgba(0,0,0,.2)';cCtx.fill();cCtx.lineCap='round';cCtx.strokeStyle='#8B3010';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(ox,oy+2);cCtx.lineTo(ox-6,oy+14);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(ox,oy+2);cCtx.lineTo(ox+6,oy+14);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(ox,oy-11);cCtx.lineTo(ox,oy+2);cCtx.strokeStyle='#C04020';cCtx.lineWidth=4;cCtx.stroke();cCtx.strokeStyle='#8B3010';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(ox,oy-6);cCtx.lineTo(ox+11,oy-2);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(ox,oy-6);cCtx.lineTo(ox-8,oy-12);cCtx.stroke();cCtx.beginPath();cCtx.arc(ox,oy-18,8,0,Math.PI*2);cCtx.fillStyle='#d4a87a';cCtx.fill();cCtx.strokeStyle='#8B3010';cCtx.lineWidth=1.5;cCtx.stroke();}
+function drawPlayer(x,y,action,ex){ex=ex||{};cCtx.lineCap='round';cCtx.beginPath();cCtx.ellipse(x,y+15,12,4,0,0,Math.PI*2);cCtx.fillStyle='rgba(0,0,0,.2)';cCtx.fill();cCtx.lineWidth=3;if(action==='walk'&&ex.wt!==undefined){var sw=Math.sin(ex.wt*Math.PI*7)*10;cCtx.strokeStyle='#185FA5';cCtx.beginPath();cCtx.moveTo(x,y+2);cCtx.lineTo(x-sw,y+16);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y+2);cCtx.lineTo(x+sw,y+16);cCtx.stroke();}else{cCtx.strokeStyle='#185FA5';cCtx.beginPath();cCtx.moveTo(x,y+2);cCtx.lineTo(x-7,y+16);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y+2);cCtx.lineTo(x+7,y+16);cCtx.stroke();}cCtx.beginPath();cCtx.moveTo(x,y-14);cCtx.lineTo(x,y+2);cCtx.strokeStyle='#378ADD';cCtx.lineWidth=5;cCtx.stroke();if(action==='miss'){var aa=ex.aa||0;cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x-13+aa,y-18+aa*.5);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x+10,y-2);cCtx.stroke();if(ex.ball){cCtx.beginPath();cCtx.arc(CCX-20,NET+8,6,0,Math.PI*2);cCtx.fillStyle='#ccdd00';cCtx.fill();cCtx.strokeStyle='#888';cCtx.lineWidth=1;cCtx.stroke();}}else if(action==='racket'){cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x+13,y+1);cCtx.stroke();cCtx.save();cCtx.translate(x+19,y+3);cCtx.strokeStyle='#EF9F27';cCtx.fillStyle='rgba(239,159,39,.15)';cCtx.lineWidth=2.5;cCtx.beginPath();cCtx.ellipse(0,0,11,7,.4,0,Math.PI*2);cCtx.fill();cCtx.stroke();cCtx.lineWidth=1;cCtx.beginPath();cCtx.moveTo(-7,0);cCtx.lineTo(7,0);cCtx.moveTo(0,-5);cCtx.lineTo(0,5);cCtx.stroke();cCtx.restore();cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x-9,y-3);cCtx.stroke();}else if(action==='breath'){var bs=ex.bs||1;cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x-12*bs,y-2);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x+12*bs,y-2);cCtx.stroke();for(var ri=1;ri<=3;ri++){cCtx.beginPath();cCtx.arc(x,y-30,8*bs*ri*.4,0,Math.PI*2);cCtx.strokeStyle='rgba(55,138,221,'+(0.45/ri)+')';cCtx.lineWidth=1.5;cCtx.stroke();}}else if(action==='think'){cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x-9,y-3);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x+11,y-14);cCtx.stroke();if(ex.ts>0.05){var ts=ex.ts;cCtx.save();cCtx.translate(x+32,y-32);cCtx.scale(ts,ts);cCtx.fillStyle='#ddeeff';cCtx.strokeStyle='#378ADD';cCtx.lineWidth=1.5;cCtx.beginPath();cCtx.roundRect(-32,-22,64,40,8);cCtx.fill();cCtx.stroke();cCtx.fillStyle='#185FA5';cCtx.font='700 10px -apple-system,sans-serif';cCtx.textAlign='center';cCtx.textBaseline='middle';cCtx.fillText('Se ballen',0,-6);cCtx.fillText('hele veien',0,8);cCtx.restore();cCtx.fillStyle='#ddeeff';cCtx.strokeStyle='#378ADD';cCtx.lineWidth=1;[[x+11,y-20,3*ts],[x+18,y-26,2*ts]].forEach(function(c){cCtx.beginPath();cCtx.arc(c[0],c[1],c[2],0,Math.PI*2);cCtx.fill();cCtx.stroke();});}}else if(action==='ready'){var rp=ex.rp||0;cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x-13+rp,y-3);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x+13-rp,y-3);cCtx.stroke();cCtx.beginPath();cCtx.arc(x,y-5,22+rp*2,0,Math.PI*2);cCtx.strokeStyle='rgba(60,180,60,'+(0.3+rp*.05)+')';cCtx.lineWidth=2.5+rp*.5;cCtx.stroke();}else{cCtx.strokeStyle='#185FA5';cCtx.lineWidth=3;cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x-10,y-2);cCtx.stroke();cCtx.beginPath();cCtx.moveTo(x,y-8);cCtx.lineTo(x+10,y-2);cCtx.stroke();}cCtx.beginPath();cCtx.arc(x,y-20,10,0,Math.PI*2);cCtx.fillStyle='#f5d0a0';cCtx.fill();cCtx.strokeStyle='#185FA5';cCtx.lineWidth=2;cCtx.stroke();}
+function rRender(){drawCourt();}
+function animWalk(fx,fy,tx,ty,cb){var dur=950,st=null;sndWalk();(function f(ts){if(!st)st=ts;var t=Math.min((ts-st)/dur,1);var e=t<.5?2*t*t:-1+(4-2*t)*t;rPX=fx+(tx-fx)*e;rPY=fy+(ty-fy)*e;rEx={wt:t};rRender();if(t<1)requestAnimationFrame(f);else{rEx={};if(cb)cb();}})(performance.now());}
+function animMiss(cb){var dur=750,st=null;sndMiss();(function f(ts){if(!st)st=ts;var t=Math.min((ts-st)/dur,1);rEx={aa:Math.sin(t*Math.PI)*6,ball:t>.1};rRender();if(t<1)requestAnimationFrame(f);else{if(cb)cb();}})(performance.now());}
+function animBreath(cb){var dur=2200,st=null;sndBreath();(function f(ts){if(!st)st=ts;var t=Math.min((ts-st)/dur,1);rEx={bs:1+Math.sin(t*Math.PI)*.55,ball:true};rRender();if(t<1)requestAnimationFrame(f);else{rEx={};if(cb)cb();}})(performance.now());}
+function animThink(cb){var dur=1200,st=null;sndChime();(function f(ts){if(!st)st=ts;var t=Math.min((ts-st)/dur,1);rEx={ts:t<.28?t/.28:1};rRender();if(t<1)requestAnimationFrame(f);else{if(cb)cb();}})(performance.now());}
+function animReady(cb){var dur=1100,st=null;sndReady();(function f(ts){if(!st)st=ts;var t=Math.min((ts-st)/dur,1);rEx={rp:Math.sin(t*Math.PI*2.5)*2.5};rRender();if(t<1)requestAnimationFrame(f);else{if(cb)cb();}})(performance.now());}
+function runRStep(i,cb){rAnimating=true;var s=rSteps[i];var fx=rPX,fy=rPY,tx=s.pos.x,ty=s.pos.y;var needWalk=(Math.abs(fx-tx)>6||Math.abs(fy-ty)>6)&&i===3;function after(){if(s.action==='miss')animMiss(done);else if(s.action==='racket'){sndRacket();rEx={};rRender();setTimeout(done,600);}else if(s.action==='breath')animBreath(done);else if(s.action==='think')animThink(done);else if(s.action==='ready')animReady(done);else{rRender();setTimeout(done,350);}}function done(){rAnimating=false;if(i===rSteps.length-1)document.getElementById('routine-complete-btn').style.display='block';if(cb)cb();}if(needWalk)animWalk(fx,fy,tx,ty,after);else{rPX=tx;rPY=ty;after();}}
+function rNext(){if(rAnimating)return;if(rStep>=rSteps.length-1){rReset();return;}rStep++;setPips(rStep);setRLabel(rStep);runRStep(rStep,null);}
+function rReset(){rAnimating=false;rStep=-1;rPX=CCX;rPY=CB-18;rEx={};setPips(-1);setRLabel(-1);document.getElementById('rfeedback').classList.remove('show');document.getElementById('routine-complete-btn').style.display='none';if(courtReady)rRender();}
+function rAuto(){if(rAnimating)return;rReset();var i=0;function go(){if(i>=rSteps.length)return;rStep=i;setPips(i);setRLabel(i);runRStep(i,function(){i++;if(i<rSteps.length)setTimeout(go,600);});}setTimeout(go,300);}
+
+/* ═══ FOKUS ═══ */
+var fCanvas=document.getElementById('focus-canvas'),fCtx=fCanvas.getContext('2d');
+var focusState=null;
+function drawFocusCanvas(){var W=640,H=150;fCtx.clearRect(0,0,W,H);var px=W/2,py=H/2+8;fCtx.beginPath();fCtx.arc(px,py-8,50,0,Math.PI*2);fCtx.fillStyle='rgba(60,160,60,.13)';fCtx.fill();fCtx.strokeStyle='#639922';fCtx.lineWidth=2;fCtx.stroke();fCtx.fillStyle='#3B6D11';fCtx.font='700 12px -apple-system,sans-serif';fCtx.textAlign='center';fCtx.textBaseline='middle';fCtx.fillText('Kan kontrollere',px,py-8);[{label:'Motstand',x:90,y:44},{label:'Dommer',x:68,y:116},{label:'Vind',x:550,y:44},{label:'Resultat',x:566,y:116}].forEach(function(o){fCtx.beginPath();fCtx.arc(o.x,o.y,28,0,Math.PI*2);fCtx.fillStyle='rgba(220,60,60,.1)';fCtx.fill();fCtx.strokeStyle='#E24B4A';fCtx.lineWidth=1.5;fCtx.stroke();fCtx.setLineDash([5,4]);fCtx.beginPath();fCtx.moveTo(o.x,o.y);fCtx.lineTo(px,py-8);fCtx.strokeStyle='rgba(220,60,60,.2)';fCtx.lineWidth=1;fCtx.stroke();fCtx.setLineDash([]);fCtx.fillStyle='#A32D2D';fCtx.font='11px -apple-system,sans-serif';fCtx.textAlign='center';fCtx.textBaseline='middle';fCtx.fillText(o.label,o.x,o.y);});var mx=px,my=py+26;fCtx.beginPath();fCtx.arc(mx,my-12,6,0,Math.PI*2);fCtx.fillStyle='#f5d0a0';fCtx.fill();fCtx.strokeStyle='#185FA5';fCtx.lineWidth=1.5;fCtx.stroke();fCtx.strokeStyle='#378ADD';fCtx.lineWidth=4;fCtx.lineCap='round';fCtx.beginPath();fCtx.moveTo(mx,my-6);fCtx.lineTo(mx,my+5);fCtx.stroke();fCtx.strokeStyle='#185FA5';fCtx.lineWidth=2.5;fCtx.beginPath();fCtx.moveTo(mx,my-2);fCtx.lineTo(mx-7,my+2);fCtx.stroke();fCtx.beginPath();fCtx.moveTo(mx,my-2);fCtx.lineTo(mx+7,my+2);fCtx.stroke();fCtx.beginPath();fCtx.moveTo(mx,my+5);fCtx.lineTo(mx-5,my+13);fCtx.stroke();fCtx.beginPath();fCtx.moveTo(mx,my+5);fCtx.lineTo(mx+5,my+13);fCtx.stroke();}
+function toggleFocus(side){var y=document.getElementById('fc-yes'),n=document.getElementById('fc-no'),m=document.getElementById('focus-msg');if(focusState===side){focusState=null;y.classList.remove('dim');n.classList.remove('dim');m.textContent='';return;}focusState=side;if(side==='yes'){n.classList.add('dim');y.classList.remove('dim');m.textContent='✓ Sett all energi her – dette kan du faktisk påvirke.';m.style.color='#3B6D11';sndGood();}else{y.classList.add('dim');n.classList.remove('dim');m.textContent='Disse er utenfor din kontroll – slipp dem.';m.style.color='#A32D2D';sndBad();}}
+
+/* ═══ RESET ═══ */
+var rcCanvas=document.getElementById('rcanvas'),rcCtx=rcCanvas.getContext('2d');
+var resetReady=false,rcDrawing=false;
+function initReset(){resetReady=true;drawResetCourt();function rcPos(e){var r=rcCanvas.getBoundingClientRect();var sx=rcCanvas.width/r.width,sy=rcCanvas.height/r.height;var cx=e.clientX||(e.touches&&e.touches[0].clientX),cy=e.clientY||(e.touches&&e.touches[0].clientY);return{x:(cx-r.left)*sx,y:(cy-r.top)*sy};}rcCanvas.onmousedown=function(e){rcDrawing=true;rcCtx.beginPath();var p=rcPos(e);rcCtx.moveTo(p.x,p.y);};rcCanvas.onmousemove=function(e){if(!rcDrawing)return;var p=rcPos(e);rcCtx.lineTo(p.x,p.y);rcCtx.stroke();};rcCanvas.onmouseup=rcCanvas.onmouseleave=function(){rcDrawing=false;};rcCanvas.ontouchstart=function(e){e.preventDefault();rcDrawing=true;rcCtx.beginPath();var p=rcPos(e);rcCtx.moveTo(p.x,p.y);};rcCanvas.ontouchmove=function(e){e.preventDefault();if(!rcDrawing)return;var p=rcPos(e);rcCtx.lineTo(p.x,p.y);rcCtx.stroke();};rcCanvas.ontouchend=function(){rcDrawing=false;};}
+function drawResetCourt(){rcCtx.clearRect(0,0,640,130);rcCtx.fillStyle='#2d7a3a';rcCtx.beginPath();rcCtx.roundRect(20,6,600,118,6);rcCtx.fill();rcCtx.strokeStyle='rgba(255,255,255,.8)';rcCtx.lineWidth=1.5;rcCtx.strokeRect(20,6,600,118);rcCtx.beginPath();rcCtx.moveTo(320,6);rcCtx.lineTo(320,124);rcCtx.stroke();rcCtx.beginPath();rcCtx.moveTo(20,65);rcCtx.lineTo(620,65);rcCtx.stroke();rcCtx.strokeStyle='#d4a843';rcCtx.lineWidth=4;rcCtx.beginPath();rcCtx.moveTo(15,65);rcCtx.lineTo(625,65);rcCtx.stroke();rcCtx.strokeStyle='#E24B4A';rcCtx.lineWidth=3;rcCtx.lineCap='round';}
+function clearReset(){if(!resetReady)return;sndPop();var alpha=1;var t=setInterval(function(){alpha-=.07;rcCtx.clearRect(0,0,640,130);rcCtx.save();rcCtx.globalAlpha=Math.max(0,alpha);drawResetCourt();rcCtx.restore();if(alpha<=0){clearInterval(t);drawResetCourt();var m=document.getElementById('reset-msg');m.textContent='✓ Ferdig! Neste poeng – fullt fokus.';m.style.color='#3B6D11';setTimeout(function(){m.textContent='';},2500);}},35);}
+
+/* ═══ SELVSNAKK ═══ */
+var sCanvas=document.getElementById('self-canvas'),sCtx=sCanvas.getContext('2d');
+function drawSelfCanvas(){var W=640,H=110;sCtx.clearRect(0,0,W,H);var lx=145,rx=495,cy=54;sCtx.beginPath();sCtx.arc(lx,cy,46,0,Math.PI*2);sCtx.fillStyle='rgba(60,160,60,.13)';sCtx.fill();sCtx.strokeStyle='#639922';sCtx.lineWidth=2;sCtx.stroke();sCtx.fillStyle='#3B6D11';sCtx.font='700 11px -apple-system,sans-serif';sCtx.textAlign='center';sCtx.textBaseline='middle';sCtx.fillText('Bygger deg opp',lx,cy-7);sCtx.font='10px -apple-system,sans-serif';sCtx.fillStyle='#27500A';sCtx.fillText('Energi + fokus',lx,cy+7);sCtx.strokeStyle='#639922';sCtx.lineWidth=2;sCtx.beginPath();sCtx.moveTo(lx,cy-48);sCtx.lineTo(lx,cy-62);sCtx.stroke();sCtx.beginPath();sCtx.moveTo(lx-5,cy-57);sCtx.lineTo(lx,cy-65);sCtx.lineTo(lx+5,cy-57);sCtx.stroke();sCtx.beginPath();sCtx.arc(rx,cy,46,0,Math.PI*2);sCtx.fillStyle='rgba(220,60,60,.1)';sCtx.fill();sCtx.strokeStyle='#E24B4A';sCtx.lineWidth=2;sCtx.stroke();sCtx.fillStyle='#A32D2D';sCtx.font='700 11px -apple-system,sans-serif';sCtx.textAlign='center';sCtx.textBaseline='middle';sCtx.fillText('Drar deg ned',rx,cy-7);sCtx.font='10px -apple-system,sans-serif';sCtx.fillStyle='#791F1F';sCtx.fillText('Tapper energi',rx,cy+7);sCtx.strokeStyle='#E24B4A';sCtx.lineWidth=2;sCtx.beginPath();sCtx.moveTo(rx,cy+48);sCtx.lineTo(rx,cy+62);sCtx.stroke();sCtx.beginPath();sCtx.moveTo(rx-5,cy+57);sCtx.lineTo(rx,cy+65);sCtx.lineTo(rx+5,cy+57);sCtx.stroke();sCtx.strokeStyle='rgba(55,138,221,.25)';sCtx.lineWidth=1.5;sCtx.setLineDash([5,4]);sCtx.beginPath();sCtx.moveTo(196,cy);sCtx.lineTo(444,cy);sCtx.stroke();sCtx.setLineDash([]);sCtx.fillStyle='#888';sCtx.font='11px -apple-system,sans-serif';sCtx.textAlign='center';sCtx.fillText('Velg bevisst',W/2,cy+2);}
+function pickPhrase(el,type){document.querySelectorAll('.phcard').forEach(function(c){c.classList.remove('pg','pr');});el.classList.add('p'+type);var fb=document.getElementById('ph-fb');if(type==='g'){fb.textContent='✓ Bra! Denne tanken gir kroppen energi og ro.';fb.style.color='#3B6D11';sndGood();}else{fb.textContent='⚠ Denne tapper energien din – bytt den ut.';fb.style.color='#A32D2D';sndBad();}}
+
+/* ═══ NERVER ═══ */
+var nCanvas=document.getElementById('nerve-canvas'),nCtx=nCanvas.getContext('2d');
+var nerveTipsData={lo:[{title:'Vekk energien',body:'Hopp litt på stedet, rist på armene og slå deg lett på lårene. Kroppen trenger et signal om at dette er viktig.'},{title:'Snakk til deg selv',body:'"Dette betyr noe – jeg vil det her!" Minn deg selv på hva som motiverer deg.'},{title:'Intensiver oppvarmingen',body:'Løp litt raskere, slå noen kraftige slag. Øk pulsen bevisst – kroppen trenger mer energi.'},{title:'Tenk på hva du spiller for',body:'Hvem ser på? Hva motiverer deg? Bruk det som drivstoff.'}],ok:[{title:'Hold det du har',body:'Du er i sonen nå – ikke overtenk. Fokus på ett og ett poeng, og stol på kroppen din.'},{title:'Bruk rutinen mellom poeng',body:'Når du er i riktig nivå er rutinen din mest effektiv. Gå gjennom den etter hvert poeng.'},{title:'Pust bevisst',body:'Oppretthold nivået med kontrollert pust mellom poengene.'},{title:'Nyt det',body:'Akkurat passe nervøs betyr at du bryr deg. Det er en god ting – bruk energien konstruktivt.'}],hi:[{title:'Pust med vilje – nå',body:'Ta tre dype pust akkurat nå. Inn gjennom nesen (4 sek), hold (2 sek), ut gjennom munnen (4 sek).'},{title:'Kroppen lyver',body:'Hjertebank betyr ikke at du er svak – det betyr at kroppen er klar. Si: "Jeg er ikke nervøs, jeg er klar."'},{title:'Rutinen som ankerpunkt',body:'Gå til racketen, se på strengene. Rutinen henter deg tilbake uansett hva som skjer i hodet ditt.'},{title:'Skrump ned øyeblikket',body:'Ikke tenk på kampen. Bare på neste poeng. Ingenting annet eksisterer akkurat nå.'},{title:'Slipp skuldrene ned',body:'De fleste holder spenning i skuldrene under press. Sjekk det nå – og slipp dem bevisst ned.'}]};
+var lastNerveZone=null;
+function renderNerveTips(v){v=parseInt(v);var zone=v<30?'lo':v>70?'hi':'ok';if(zone===lastNerveZone)return;lastNerveZone=zone;var tips=nerveTipsData[zone];var cls={lo:'ntc-lo',ok:'ntc-ok',hi:'ntc-hi'}[zone];var c=document.getElementById('nerve-tips');c.innerHTML='';tips.forEach(function(t){var d=document.createElement('div');d.className='nerve-tip-card '+cls;d.innerHTML='<h4>'+t.title+'</h4><p>'+t.body+'</p>';c.appendChild(d);});}
+function drawNerveCanvas(v){v=parseInt(v);var W=640,H=180;nCtx.clearRect(0,0,W,H);nCtx.beginPath();for(var i=0;i<=100;i++){var xp=50+i*5.4,yp=H-24-(Math.sin(i/100*Math.PI)*138);if(i===0)nCtx.moveTo(xp,yp);else nCtx.lineTo(xp,yp);}nCtx.strokeStyle='rgba(55,138,221,.2)';nCtx.lineWidth=2;nCtx.stroke();nCtx.save();nCtx.beginPath();nCtx.moveTo(50,H-24);for(var i=0;i<=100;i++){nCtx.lineTo(50+i*5.4,H-24-(Math.sin(i/100*Math.PI)*138));}nCtx.lineTo(590,H-24);nCtx.closePath();var grd=nCtx.createLinearGradient(50,0,590,0);grd.addColorStop(0,'rgba(55,138,221,.15)');grd.addColorStop(.33,'rgba(99,153,34,.25)');grd.addColorStop(.67,'rgba(99,153,34,.25)');grd.addColorStop(1,'rgba(226,75,74,.15)');nCtx.fillStyle=grd;nCtx.fill();nCtx.restore();nCtx.strokeStyle='#dddbd4';nCtx.lineWidth=1;nCtx.beginPath();nCtx.moveTo(45,H-24);nCtx.lineTo(595,H-24);nCtx.stroke();nCtx.font='11px -apple-system,sans-serif';nCtx.textAlign='center';nCtx.fillStyle='#185FA5';nCtx.fillText('For lite energi',110,H-7);nCtx.fillStyle='#3B6D11';nCtx.fillText('Perfekt nivå',320,H-7);nCtx.fillStyle='#A32D2D';nCtx.fillText('For mye stress',530,H-7);nCtx.save();nCtx.translate(14,H/2);nCtx.rotate(-Math.PI/2);nCtx.fillStyle='#888';nCtx.font='11px -apple-system,sans-serif';nCtx.textAlign='center';nCtx.fillText('Prestasjon',0,0);nCtx.restore();var mx=50+v*5.4,my=H-24-(Math.sin(v/100*Math.PI)*138);var mc=v<30?'#378ADD':v>70?'#E24B4A':'#639922';nCtx.save();nCtx.globalAlpha=.08;nCtx.fillStyle=mc;var zx=v<30?50:v>70?50+70*5.4:50+30*5.4,zw=v<30?30*5.4:v>70?30*5.4:40*5.4;nCtx.fillRect(Math.min(zx,50),20,zw,H-44);nCtx.restore();nCtx.beginPath();nCtx.arc(mx,my,9,0,Math.PI*2);nCtx.fillStyle=mc;nCtx.fill();nCtx.strokeStyle='white';nCtx.lineWidth=2.5;nCtx.stroke();nCtx.setLineDash([3,3]);nCtx.strokeStyle=mc;nCtx.lineWidth=1.5;nCtx.beginPath();nCtx.moveTo(mx,my+10);nCtx.lineTo(mx,H-24);nCtx.stroke();nCtx.setLineDash([]);}
+function updateNerve(v){document.getElementById('nneedle').style.left=v+'%';var l=document.getElementById('nerve-lbl');v=parseInt(v);if(v<30){l.textContent='For lite nervøs – energien mangler';l.style.color='#185FA5';}else if(v>70){l.textContent='For nervøs – bruk teknikkene nedenfor';l.style.color='#A32D2D';}else{l.textContent='Akkurat passe – skjerpet og klar!';l.style.color='#3B6D11';}drawNerveCanvas(v);renderNerveTips(v);}
+
+/* ─── INIT ─── */
+loadScores();
+</script>
+</body>
+</html>
